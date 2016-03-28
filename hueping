@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+#
+# Blink all of your Phillips Hue Lights when a host comes online
+#
+# On the first run, provide IP of bridge with `--bridge` option.
+import argparse
+import sys
+import subprocess
+
+import phue
+
+
+def alert_on_ping(host, bridge=None):
+    bridge = phue.Bridge(bridge)
+    ret = subprocess.call(['ping', '-o', host])
+    if ret == 0:
+        for light in bridge.get_light_objects():
+            light.alert = 'lselect'
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('host', help='Host to ping')
+    parser.add_argument('-b', '--bridge', help='IP of Hue Bridge')
+    args = parser.parse_args()
+
+    try:
+        alert_on_ping(args.host, bridge=args.bridge)
+    except phue.PhueRegistrationException:
+        sys.stderr.write('error: press button on hue bridge and'
+                         ' re-run to register app\n')
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
